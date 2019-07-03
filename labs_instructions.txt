@@ -1,0 +1,340 @@
+# Install docker in centos7
+# Remove pre-install docker
+sudo yum -y remove docker \
+                   docker-client \
+                   docker-client-latest \
+                   docker-common \
+                   docker-latest \
+                   docker-latest-logrotate \
+                   docker-logrotate \
+                   docker-engine
+
+# Install required packages.                   
+yum install -y yum-utils \
+  device-mapper-persistent-data \
+  lvm2
+  
+# Install docker-ce yum repository 
+yum-config-manager \
+    --add-repo \
+    https://download.docker.com/linux/centos/docker-ce.repo
+
+# list all availables version
+yum list docker-ce --showduplicates | sort -r
+
+# install latest version
+yum -y install docker-ce docker-ce-cli containerd.io
+
+# docker daemon.json, basesize must be more 70G
+{
+  "data-root": "/usr/services/data/docker",
+  "storage-driver": "devicemapper",
+  "storage-opts": [
+    "dm.basesize=70G"
+  ]
+}
+
+# 將使用者加入 docker group，這樣就可以執行 docker 指令
+sudo groupadd docker
+sudo usermod -a -G docker $USER
+service restart docker or systemctl restart docker, then login agin.
+
+# Update docker restart policy that was already created
+docker update --restart=always <container id>
+
+# Docker local registry
+docker run -d -p 5000:5000 --restart=always --name registry registry:2
+
+# client push image to registry insecure mode, create or modify
+/etc/docker/daemon.json
+Add below linemkdir -p eyesmedia/apps
+{ "insecure-registries":["myregistry.example.com:5000"] }
+Resart docker daemon
+
+# Docker push image steps
+docker tag [OPTIONS] IMAGE[:TAG] [REGISTRYHOST/][USERNAME/]NAME[:TAG]
+docker push NAME[:TAG]
+# example
+docker tag 518a41981a6a myRegistry.com/myImage
+docker push myRegistry.com/myImage
+
+
+# Run an instance of mysql as mysql server
+docker run -it \
+--name mysql-server \
+-e MYSQL_ROOT_PASSWORD="pass" \
+mysql \
+
+# Run an instance of mysql as a mysql client
+docker run -it --rm \
+--name mysql-client \
+--link mysql-server \
+-e MYSQL_EMPTY_PASSWORD \
+mysql \
+mysql -uroot -h mysql-server -ppass
+
+# Dump database
+docker exec -it INSTANCE_ID mysqldump -uUSER -pPASSWORD DATABASE > BACKUP.sql
+docker exec -it 3825206d4f41 mysqldump -uroot -p28010606 youlu_custom > strong_americano.sql
+
+docker exec -it 7f7280a42441 mysqldump -udeveloper -p28010606 youlu_custom > youlu_custom_financial-exhibition.sql
+
+
+docker exec -it INSTANCE_ID mysqldump -uUSER -pPASSWORD DATABASE > BACKUP.sql
+
+
+
+# network practice
+docker network create -d bridge test_net
+docker run -d --net test_net --name db training/postgres
+docker run --network test_net training/webapp ping db
+docker run training/webapp ping db
+
+docker run --name web --link db:db training/webapp ping db
+--link <name or id>:alias
+Where name is the name of the container we’re linking to and alias is an alias for the link name.
+
+docker run --name web --link db training/webapp ping db
+--link <name or id>
+In which case the alias will match the name.
+
+
+Let spring-boot-sample as docker production image
+
+# build production binary
+docker run -v `pwd`:/app -v $HOME/.m2:/root/.m2 -w /app andreptb/maven:3.3.9-jdk8 mvn package
+
+# start docker registry server
+docker run -d -p 5000:5000 --restart=always --name registry registry:2
+
+# build docker image from Dockerfile (current working directory is /workspace/spring-boot-sample)
+docker build -t localhost:5000/java_sample_prod .
+
+# push image to private registry server
+docker push localhost:5000/java_sample_prod
+
+# stop and kill prod-server
+docker rm -f prod-server
+
+# pull docker image from private registry server
+docker pull localhost:5000/java_sample_prod
+
+# run 
+docker run --name prod-server -d --restart=always -p 8800:8000 localhost:5000/java_sample_prod
+
+# docker-machine
+# create a docker machine on virtualbox, name is poc
+docker-machine create --driver virtualbox poc
+
+# poc create
+docker-machine start poc
+docker-machine ssh poc
+docker pull coffeebelt/mandheling:mysql5.7-utf8
+
+# a vloume for mysql data storage
+docker volume create --name mysqldata
+
+# a volume for application storage
+docker-machine scp poc.tar.gz poc:/home/docker
+
+docker run -d --restart always --name shakeit \
+-e MYSQL_ROOT_PASSWORD="password" \
+-p 3306:3306 \
+-v /home/shakeit/mysqldata:/var/lib/mysql \
+-v /home/shakeit/mysql-files:/var/lib/mysql-files \
+coffeebelt/mandheling:mysql5.7-utf8
+
+
+# Run an instance of mysql
+docker run -d --restart always --name mysql-5.7 \
+-e MYSQL_ROOT_PASSWORD="ZdMZ2NpTZCGwnV8W" \
+-p 3306:3306 \
+-v /usr/services/data/mysql/mysql-data:/var/lib/mysql \
+-v /usr/services/data/mysql/mysql-files:/var/lib/mysql-files \
+-v /usr/services/data/mysql/config/my.cnf:/etc/my.cnf \
+af2f1cccc6ed
+coffeebelt/mandheling:mysql5.7-utf8
+
+docker run -d --restart always --name mysql-5.7 \
+-e MYSQL_ROOT_PASSWORD="28010606" \
+-p 3306:3306 \
+af2f1cccc6ed
+
+
+# Connect to mysql
+docker exec -it 37f8ca20878a mysql -u root -p
+
+# import data to exist database, original data will be deleted.
+docker exec -i 7f7280a42441 mysql -uroot -peyesmedia --database=youlu_custom < /home/centos/youlu_custom_Buddhism.sql
+docker exec -i 37f8ca20878a mysql -uroot -peyesmedia --database=jira < /home/ec2-user/jira_backup.sql
+
+# mysql utf8 database
+CREATE DATABASE h5games CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE DATABASE corpus CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE DATABASE youlu_custom CHARACTER SET utf8 COLLATE utf8_general_ci;
+CREATE DATABASE jira CHARACTER SET utf8 COLLATE utf8_ci;
+CREATE DATABASE funpass_cusmgconsl CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci
+
+# mysql database scripts
+# list collation of specific charset
+SHOW COLLATION WHERE Charset = 'utf8mb4';
+# list available character set.
+SHOW CHARACTER SET;
+# list user privileges
+SHOW GRANTS FOR '<USER>'@'IP or host'
+# mysqldump
+mysqldump -udeveloper -p28010606 -h54.199.184.205 -P50000 sit_cusmgconsl PT_ADMIN_USER > PT_ADMIN_USER.sql
+mysqldump -udeveloper -p28010606 -h54.199.184.205 -P50000 sit_cusmgconsl PT_ADMIN_ROLE > PT_ADMIN_ROLE.sql
+mysqldump -udeveloper -p28010606 -h54.199.184.205 -P50000 sit_cusmgconsl PT_ADMIN_RESOURCE > PT_ADMIN_RESOURCE.sql
+mysqldump -udeveloper -p28010606 -h54.199.184.205 -P50000 sit_cusmgconsl PT_ADMIN_USER_PT_ADMIN_ROLE > PT_ADMIN_USER_PT_ADMIN_ROLE.sql
+
+# mysql import data
+docker exec -i 7f7280a42441 mysql -udeveloper -p28010606 --database=sit_cusmgconsl < ./PT_ADMIN_USER.sql
+
+
+PT_ADMIN_USER_PT_ADMIN_ROLE
+
+
+-u developer -p -h 54.199.184.205 -P 50000
+ 
+docker run -d --restart always --name poc-app \
+-e APP_LOG_FOLDER="/apps" \
+-e SPRING_APPLICATION_NAME=poc \
+-e SPRING_PROFILES_ACTIVE=poc \
+-p 8080:8080 \
+-v apps:/apps \
+coffeebelt/mandheling:alpine-java8-server-jre \
+java -jar /apps/pocApp.jar
+
+
+# aws docker machine 
+./docker-machine create --driver amazonec2 \
+--amazonec2-open-port 80 \
+--amazonec2-region ap-northeast-1 \
+--amazonec2-ami ami-2a69be4c \
+--amazonec2-ssh-user ec2-user \
+--amazonec2-instance-type  t2.micro \
+--amazonec2-root-size 64 \
+--amazonec2-security-group dev-server-4 \
+dev-server-
+
+#  bash docker container execute shell with it.
+docker run -it --rm bash:latest
+
+docker run -it --rm --name my-running-app -v /home/docker/my.sh:/my.sh:ro bash:latest bash /my.sh
+
+# nginx
+docker run -d --net app-net --expose="8080" --name nginx-master \
+-v /home/bjlin/nginx/conf/nginx.conf:/etc/nginx.conf:ro \
+-v /home/bjlin/nginx/log:/var/log/nginx \
+-v /home/bjlin/nginx/html:/usr/share/nginx/html \
+-p 8080:80 \
+docker.io/nginx:latest
+
+# haproxy
+docker run -d --net app-net --link nginx-master:nginx  --name haproxy \
+-v /home/bjlin/haproxy/conf/:/usr/local/etc/haproxy:ro \
+-v /home/bjlin/haproxy/log:/var/log/haproxy \
+-p 80:9090 \
+docker.io/haproxy:latest
+
+# jenkins
+docker run -u 1002 -d --restart always -p 8080:8080 \
+--env JENKINS_OPTS="--prefix=/jenkins" \
+-v /home/jenkins/jenkins-data:/var/jenkins_home \
+-v /usr/share/apache-maven:/usr/share/maven \
+cd14cecfdb3a
+jenkins:latest
+
+
+docker commit -m "maven settings apply eyesmedia nexus3 repository profiles" 6748915b98d7 192.168.59.120:5000:jenkins-eyesmedia
+
+# mongodb
+docker run --restart always -d -p 27017:27017 --name mongodb \
+-e MONGO_INITDB_ROOT_USERNAME=root \
+-e MONGO_INITDB_ROOT_PASSWORD=27078600@Eyesmedia \
+-v /usr/services/eyesmedia/apps/mongodb-data:/data/db \
+-v /usr/services/eyesmedia/apps/mongodb-data/config:/etc/mongo \
+mongo:3.4.18 --auth
+
+# mongodump from docker
+mongodump --archive=nlubot_dictionary.tar.gz --gzip --username root --password eyesmedia@28010606 --db nlubot_dictionary
+
+docker exec -it c6704830fab3 mongoexport -u developer -p 28010606 --db buddhism --collection card_tags_39fd07fd-54d1-4a2d-b8de-c70eb9658715 --out card_tags_39fd07fd-54d1-4a2d-b8de-c70eb9658715.json
+
+docker exec -it c6704830fab3 mongoexport -u developer -p 28010606 --db buddhism --collection tag_39fd07fd-54d1-4a2d-b8de-c70eb9658715 --out tag_39fd07fd-54d1-4a2d-b8de-c70eb9658715.json
+
+docker exec -it 32dba1402871 mongoimport -u developer -p 28010606 --db buddhism --collection card_tags_39fd07fd-54d1-4a2d-b8de-c70eb9658715 --file card_tags_39fd07fd-54d1-4a2d-b8de-c70eb9658715.json
+
+docker exec -it 32dba1402871 mongoimport -u developer -p 28010606 --db buddhism --collection tag_39fd07fd-54d1-4a2d-b8de-c70eb9658715 --file tag_39fd07fd-54d1-4a2d-b8de-c70eb9658715.json
+
+
+# mongorestore to docker
+# cp dump-files to mongo container
+docker cp DUMP-FILES INSTANCEID
+# restore to specify container
+docker exec -it INSTANCEID mongorestore --archive=DUMP-FILES --gzip --username USERNAME --password PASSWORD
+
+db.createUser({
+    user: 'developer',
+    pwd: '28010606',
+    roles: [{ role: 'readWrite', db:'buddhism'}]
+})
+
+
+# connection to mongodb
+docker exec -it c6704830fab3 mongo -u developer -p 28010606 --authenticationDatabase test
+docker exec -it df95ca7791b9 mongo -u root -p 27078600@Eyesmedia --authenticationDatabase admin
+docker exec -it a15930a90684 mongo -u corpuser -p WfkMKzJYQ3bW --authenticationDatabase corpus
+
+# Redis, uid 1002 is eyesmedia
+docker run -u 1002 --restart always -d -p 6379:6379 --name redis \
+--sysctl net.core.somaxconn=65535 \
+-v /usr/services/eyesmedia/apps/redis/config/redis.conf:/usr/local/etc/redis/redis.conf \
+-v /usr/services/eyesmedia/apps/redis/data:/data \
+d3e3588af517 redis-server /usr/local/etc/redis/redis.conf
+
+# redis os config
+# /etc/sysctl.conf
+vm.overcommit_memory = 1
+# /etc/rc.local
+echo never > /sys/kernel/mm/transparent_hugepage/enabled
+
+if test -f /sys/kernel/mm/transparent_hugepage/enabled; then
+echo never > /sys/kernel/mm/transparent_hugepage/enabled
+fi
+if test -f /sys/kernel/mm/transparent_hugepage/defrag; then
+echo never > /sys/kernel/mm/transparent_hugepage/defrag
+fi
+
+# Nexus3
+docker run -u 1003 -d --restart always -p 8082:8081 --name nexus3 \
+--env NEXUS_CONTEXT=nexus3 \
+-v /usr/services/data/nexus3:/nexus-data \
+sonatype/nexus3:latest
+
+# nexus2
+docker run -d -p 8081:8081 --name nexus2 \
+-v /usr/services/eyesmedia/apps/sonatype:/nexus-data \
+sonatype/nexus:oss2
+
+
+db.createUser({
+    user: 'funpass',
+    pwd: '28010606',
+    roles: [{ role: 'readWrite', db:'funpass_cusmgconsl'}, { role: 'dbAdmin', db:'funpass_cusmgconsl'}]
+})
+
+db.grantRolesToUser(
+   'funpass',
+   [ { role : 'dbOwner', db : 'funpass_cusmgconsl' } ]
+)
+
+db.createUser({
+    user: 'developer',
+    pwd: '28010606',
+    roles: [{ role: 'readWrite', db:'test'}]
+})
+
+
+mongo -u eyesmedia -p 9TExs47D33P2 --authenticationDatabase admin

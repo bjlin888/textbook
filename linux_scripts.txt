@@ -1,0 +1,175 @@
+確認伺服器的連線使用狀態，如果 TIME_WAIT 數值很高，表示很多在排隊等待
+netstat -ant | grep TIME_WAIT | wc -l # TIME_WAIT 數值應該很高
+
+
+# 使用 nc (netcat) 指令取得特定網頁主機的網頁
+echo -e "GET /index.html HTTP/1.0\r\n\r\n" | nc -v -w 5 192.168.99.100 8080
+
+
+# ssh
+mkdir .ssh; chmod -R 700 .ssh;touch authorized_keys;
+
+# generate ssh key
+ssh-keygen -b 2048 -t rsa
+
+ssh-keygen -f ./.ssh/github-bjlin888 -b 2048 -t rsa -N ''
+
+ssh-keygen -f ~/sshkeys/eyesmedia-gcp -b 2048 -t rsa -N ''
+
+# Get public key signature
+ssh-keygen -y -f sshkey.file
+
+# chagne key passphrase
+ssh-keygen -p -f ~/.ssh/id_dsa
+
+
+# sed 
+sed 's/要被取代的字串/新的字串/g'
+
+
+# run shell as different user
+/bin/su - postgres -c "/path/to/backup_db.sh /tmp/test"
+
+Breaking it down:
+ /bin/su : switch user
+ - : option to su, make it a login session (source profile for the user)
+ postgres : user to become
+ -c "/path/to..." : command to run
+
+ # grep
+ grep -B {往前行數} -A {往後行數} foo README.txt
+ examples:
+ grep -B 3 -A 2 foo README.txt
+
+
+# mysql drop all tables
+SET FOREIGN_KEY_CHECKS = 0; 
+SET @tables = NULL;	
+SELECT GROUP_CONCAT(table_schema, '.', table_name) INTO @tables
+  FROM information_schema.tables 
+  WHERE table_schema = 'poc'; -- specify DB name here.
+
+SET @tables = CONCAT('DROP TABLE ', @tables);
+PREPARE stmt FROM @tables;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+SET FOREIGN_KEY_CHECKS = 1; 
+
+
+# Give write permissions to multiple users on a folder
+sudo groupadd {GROUP NAME}
+sudo usermod -a -G {GROUP NAME} {USER}
+sudo chgrp -R {GROUP NAME} {path to directory}
+sudo chmod -R 775 {/path/to/the/directory}
+
+
+# openssl create csr in slient mode
+openssl req -new -sha256 -key domain.key -subj "/C=TW/ST=Taiwan/L=Taipei/O=Eyesmedia/OU=Eyesmedia/CN=${HOST}" -out server.csr
+
+# openssl output key without des
+openssl pkcs12 -in *.p12 -out *.key -nocerts -nodes
+
+# Checking the current number of threads used 
+top -b -H -u eyesmedia -n 1 | wc -l
+
+# Checking the max user processes limit
+ulimit -u
+
+# git change file to executable
+git update-index --chmod=+x files
+
+# delete remote tag
+git push --delete origin tagname
+
+
+# kill nginx all process
+kill -QUIT $( ps -ef|grep nginx | awk '{ print $2; }' )
+
+#
+With Amazon EC2 and elastic IPs, the server doesn't actually know its IP as with most any other server.
+So you need to tell your linux to allow processes to bind to the non-local address. Just add the following line into /etc/sysctl.conf file:
+net.ipv4.ip_nonlocal_bind = 1
+sysctl -p /etc/sysctl.conf
+
+# chagne hostname
+https://support.rackspace.com/how-to/centos-hostname-change/
+
+sudo nano /etc/sysconfig/network
+# add below line
+HOSTNAME=myserver.domain.com
+
+sudo vi /etc/hosts
+# add ip host name mapping
+123.45.67.89   hostname.domain.com   hostname
+
+sudo hostnamectl set-hostname hostname.domain.com
+/etc/init.d/network restart
+
+
+# 
+/usr/bin/find ./mqtt_*.2018-11-05*.log -exec rm -Rf {} \;
+
+
+## Java CLI
+# Print head info
+ java -XX:+PrintFlagsFinal -Xms512m -Xmx1024m -Xss512k -XX:PermSize=64m -XX:MaxPermSize=128m -version | grep -iE 'HeapSize|PermSize|ThreadStackSize'
+
+# Dump JVM system properties
+java -XshowSettings:properties -version
+# list running jvm pid
+jcmd 
+# Dump JVM system properties with specify pid
+jcmd <PID> VM.system_properties
+
+
+ps -e -o pid,vsz,comm,user= | sort -n -k 2 | grep java
+ps --everyone --format=pid,vsz,comm= | sort --numeric-sort --key=2
+
+# mysql utf8 database
+CREATE DATABASE midleacctuser_dev CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE DATABASE midleacctuser_dev CHARACTER SET utf8 COLLATE utf8_general_ci;
+# java keytool
+# Gen keypair command
+keytool -genkeypair -alias jwtkey -keyalg RSA -keysize 2048 -validity 3650 -keypass eyesmedia -keystore ./eyesmedia.bks -storepass eyesmedia -storetype bks -providerclass org.bouncycastle.jce.provider.BouncyCastleProvider -v
+
+keytool -list -keypass 28010606 -keystore ./aaa.bks -storepass 28010606 -storetype bks
+keytool -list -keypass eyesmedia -keystore ./eyesmedia.bks -storepass eyesmedia -storetype bks
+
+# sudo
+# 編輯 /etc/sudoers.d/90-eyesmedia-init-users
+# USER ALL=(TARGET_USER:TARGET_GROUP) NOPASSWD:ALL
+# 切換到指定的身份，該身份必須有配置在/etc/sudoers.d/90-eyesmedia-init-users中
+sudo -u {USER} -s
+
+# make swap space on ec2 instance
+# creat a new volumn through aws console, the volumn size is memory x 2, 
+# attach the volumn to ec2 instance
+# reference https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-store-swap-volumes.html
+# find device
+fdisk -l
+# mk file system
+mkfs.ext4 /dev/xvdf <--- new volumn mount to
+# make swap space
+mkswap /dev/xvdf
+# enable swap to the volumn
+swapon /dev/xvdf
+# list swap space
+swapon -s
+lsblk
+
+# Set timezone
+sudo timedatectl set-timezone Asia/Taipei
+
+# systemctl 
+list all eyesmedia service unit
+systemctl list-units --type service | grep 'eyesmedia-*'
+
+# environment
+LANG=zh_TW.UTF-8
+LC_ALL=zh_TW.UTF-8
+LC_CTYPE=zh_TW.UTF-8
+
+# tar exclude folder or files
+tar -czv --exclude "./bin" -f <FILE>.tar.gz <folder>
+
+

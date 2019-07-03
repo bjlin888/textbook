@@ -1,0 +1,36 @@
+Centos 7 Initialized
+
+# Install Oracle JDK, Find latest version on 
+# http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html
+
+# Download jdk
+curl -L -b "oraclelicense=a" -O http://download.oracle.com/otn-pub/java/jdk/8u171-b11/512cd62ec5174c3487ac17c61aaa89e8/jdk-8u171-linux-i586.rpm
+
+# install required packages.
+sudo yum -y install gcc.x86_64 glibc.i686 libgcc.i686 zlib-devel.x86_64 wget
+sudo yum install glibc.i686
+sudo yum install libgcc.i686
+sudo yum install zlib-devel.x86_64
+
+# JRE
+curl -L -b "oraclelicense=a" -O http://download.oracle.com/otn-pub/java/jdk/8u171-b11/512cd62ec5174c3487ac17c61aaa89e8/jre-8u171-linux-i586.rpm
+
+# install 
+sudo rpm -ivh jre-8u171-linux-i586.rpm
+
+curl -O https://www.python.org/ftp/python/3.6.5/Python-3.6.5.tgz
+tar xvf Python-3.6.5.tgz
+cd Python-3.6.5
+./configure
+make
+make test
+make install
+
+# Install aws-cli
+curl -O https://bootstrap.pypa.io/get-pip.py
+python get-pip.py --user
+export PATH=~/.local/bin:$PATH
+pip --version
+pip install awscli --upgrade --user
+
+
