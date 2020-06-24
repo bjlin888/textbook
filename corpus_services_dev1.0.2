@@ -1,0 +1,89 @@
+# collections
+dev_recom_item: 爬回的商品資料
+
+
+# 良興電子貼標資料
+db.getCollection('nlu_corpus_tag').find({"article_source": "eclife"})
+
+
+1. 標籤管理 > 標籤總表 > 關係標籤 功能發佈
+2. 下列資料轉移至正式環境
+良興商品資料 (nlu_corpus_source) -- 正式環境 (nlu_corpus_source)
+良興貼標資料 (nlu_corpus_tag) -- 正式環境 (nlu_corpus_tag)
+關係標籤資料 (nlu_relation_tag) -- 正式環境nlu_relation_tag)
+同義詞資料 (nlu_synonyms)測試環境 -- 正式環境 (nlu_synoyms)
+商品爬蟲資料 (dev_recom_item)測試環境 --> 正式環境 (crawler_inbound_data)
+
+nlu_job_config
+
+# sit mongo 資料轉移，轉移來源 nlu_corpus_source, nlu_corpus_tag， ec-life 商品文本與貼標資料轉移
+STEP0 確認資料源資料列筆數，
+		1.1 nlu_corpus_source 資料列數統計條件：{"article_source" : "ec", "board":"eclife", "clean_status": {$in: [0, 1]}}
+    1.2 nlu_corpus_tag 資料列數統計條件：
+					db.getCollection('nlu_corpus_tag').aggregate([
+					    { $match: {"article_source" : "ec"}},
+					    {
+					      $lookup:
+					        {
+					          from: "nlu_corpus_source",
+					          localField: "source_id",
+					          foreignField: "_id",
+					          as: "corpus_source"
+					        }
+					   },
+					   {$count: "rows"}
+					])
+
+資料轉移
+STEP1
+# 將 SIT ec-life 商品資訊從 nlu_corpus_source 導出
+mongoexport --db SOURCE_DB --collection nlu_corpus_source --query='{"article_source" : "ec", "board":"eclife", "clean_status": {$in: [0, 1]}}' --out=/nlubot_dictionary_eclife.json -u USER_NAME -p PASSWORD --authenticationDatabase SOURCE_DB
+
+STEP2
+# 將 SIT ec-life 商品資訊匯入正式環境 nlu_corpus_source, 使用 mongoimport with insert 模式。
+mongoimport --db TARGET_DB --collection nlu_corpus_source --file=/nlubot_dictionary_eclife.json --mode=insert --stopOnError -u USER_NAME -p PASSWORD --authenticationDatabase TARGET_DB
+
+STEP3 將 SIT ec 貼標的資料導出到 nlu_corpus_tag_ec
+db.getCollection('nlu_corpus_tag').aggregate([
+    { $match: {"article_source" : "ec"}},
+    {
+      $lookup:
+        {
+          from: "nlu_corpus_source",
+          localField: "source_id",
+          foreignField: "_id",
+          as: "corpus_source"
+        }
+   },
+   { $project:
+       {"_id":1, "crd_date":1, "mdy_date":1, "word":1, "article_index":1, 
+            "tag_type":1, "domains":1, "entities":1, "article_source":1, "source_id":1, "status":1, "mdy_user":1, "crt_user":1, "pairing":1, "auto_tag":1, "article_id":1}
+   },
+   {$out: "nlu_corpus_tag_ec"}
+])
+
+STEP4 將 nlu_corpus_tag_ec 導出至檔案
+mongoexport --db SOURCE_DB --collection nlu_corpus_tag_ec --query="{}" --out=/nlu_corpus_tag_ec.json -u USER_NAME -p PASSWORD --authenticationDatabase SOURCE_DB
+
+STEP5  將貼標資料導入正式區 nlu_corpus_tag
+mongoimport --db TARGET_DB --collection nlu_corpus_tag --file=/nlu_corpus_tag_ec.json --mode=insert --stopOnError -u USER_NAME -p PASSWORD --authenticationDatabase TARGET_DB
+
+STEP6 驗證正式區資料列筆數是否與 STEP0 相同。
+
+STEP7 導出 SIT nlu_relation_tag, nlu_synonyms, dev_recom_item 的所有資料
+mongoexport --db SOURCE_DB --collection nlu_relation_tag --query="{}" --out=/nlu_relation_tag.json -u USER_NAME -p PASSWORD --authenticationDatabase SOURCE_DB
+
+mongoexport --db SOURCE_DB --collection nlu_synonyms --query="{}" --out=/nlu_synonyms.json -u USER_NAME -p PASSWORD --authenticationDatabase SOURCE_DB
+
+mongoexport --db SOURCE_DB --collection dev_recom_item --query="{}" --out=/dev_recom_item.json -u USER_NAME -p PASSWORD --authenticationDatabase SOURCE_DB
+
+STEP8 nlu_relation_tag.json, nlu_synonyms.json, dev_recom_item.json 分別導入正式環境
+mongoimport --db TARGET_DB --collection nlu_relation_tag --file=/nlu_relation_tag.json --mode=insert --stopOnError -u USER_NAME -p PASSWORD --authenticationDatabase TARGET_DB
+
+mongoimport --db TARGET_DB --collection nlu_synonyms --file=/nlu_synonyms.json --mode=insert --stopOnError -u USER_NAME -p PASSWORD --authenticationDatabase TARGET_DB
+
+mongoimport --db TARGET_DB --collection crawler_inbound_data --file=/dev_recom_item.json --mode=insert --stopOnError -u USER_NAME -p PASSWORD --authenticationDatabase TARGET_DB
+
+STEP8 導出 nlu_job_config.job_type=ec and nlu_job_config.job_name='電商'
+
+

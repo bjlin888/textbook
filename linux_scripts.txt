@@ -134,6 +134,7 @@ keytool -genkeypair -alias jwtkey -keyalg RSA -keysize 2048 -validity 3650 -keyp
 
 keytool -list -keypass 28010606 -keystore ./aaa.bks -storepass 28010606 -storetype bks
 keytool -list -keypass eyesmedia -keystore ./eyesmedia.bks -storepass eyesmedia -storetype bks
+keytool -export -keypass eyesmedia -keystore ./eyesmedia.bks -storepass eyesmedia -storetype bks -alias jwtkey -file jwtkey.cer
 
 # sudo
 # 編輯 /etc/sudoers.d/90-eyesmedia-init-users
@@ -171,5 +172,9 @@ LC_CTYPE=zh_TW.UTF-8
 
 # tar exclude folder or files
 tar -czv --exclude "./bin" -f <FILE>.tar.gz <folder>
+
+# 
+runuser -l userNameHere -c 'command'
+runuser -l userNameHere -c '/path/to/command arg1 arg2'
 
 

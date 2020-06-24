@@ -82,6 +82,7 @@ docker exec -it 7f7280a42441 mysqldump -udeveloper -p28010606 youlu_custom > you
 
 docker exec -it INSTANCE_ID mysqldump -uUSER -pPASSWORD DATABASE > BACKUP.sql
 
+docker exec -it 0a9d1a5d4088 mysqldump -uroot -pZdMZ2NpTZCGwnV8W jira > jira.sql
 
 
 # network practice
@@ -160,6 +161,18 @@ docker run -d --restart always --name mysql-5.7 \
 -p 3306:3306 \
 af2f1cccc6ed
 
+# neo4j 
+docker run \
+    --name sit_neo4j \
+    -p7474:7474 -p7687:7687 \
+    -d \
+    -v $HOME/neo4jsvr/data:/data \
+    -v $HOME/neo4jsvr/logs:/logs \
+    -v $HOME/neo4jsvr/import:/var/lib/neo4j/import \
+    -v $HOME/neo4jsvr/plugins:/plugins \
+    -v $HOME/neo4jsvr/conf:/conf \
+    --env NEO4J_AUTH=neo4j/test \
+    neo4j:latest
 
 # Connect to mysql
 docker exec -it 37f8ca20878a mysql -u root -p
@@ -172,14 +185,95 @@ docker exec -i 37f8ca20878a mysql -uroot -peyesmedia --database=jira < /home/ec2
 CREATE DATABASE h5games CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 CREATE DATABASE corpus CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 CREATE DATABASE youlu_custom CHARACTER SET utf8 COLLATE utf8_general_ci;
-CREATE DATABASE jira CHARACTER SET utf8 COLLATE utf8_ci;
+CREATE DATABASE jira CHARACTER SET utf8 COLLATE utf8_bin;
 CREATE DATABASE funpass_cusmgconsl CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci
+CREATE DATABASE sit_tms CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci
+CREATE DATABASE sit_aaa CHARACTER SET utf8 COLLATE utf8_unicode_520_ci
+CREATE DATABASE bookstackapp CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci
+CREATE DATABASE tms_cusmgconsl CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci;
+CREATE DATABASE biz_cusmgconsl CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci;
+CREATE DATABASE demo_cusmgconsl CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci;
+CREATE DATABASE mgrconsl CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci;
+CREATE DATABASE sit_cusmgconsl CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci;
+
+# account authen authorz - stage
+CREATE DATABASE stage_acct_auth_authz CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci;
+CREATE USER 'zone-a-stage-aaa'@'10.255.125.%' IDENTIFIED BY 'GT3U7i26h68f';
+CREATE USER 'zone-a-stage-aaa'@'10.255.126.%' IDENTIFIED BY 'GT3U7i26h68f';
+GRANT ALL PRIVILEGES ON stage_acct_auth_authz.* TO 'zone-a-stage-aaa'@'10.255.125.%';
+GRANT ALL PRIVILEGES ON stage_acct_auth_authz.* TO 'zone-a-stage-aaa'@'10.255.126.%';
+
+# account authen authorz - zone-a production
+CREATE DATABASE acct_auth_authz CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci;
+CREATE USER 'zone-a-aaa'@'10.255.125.%' IDENTIFIED BY '69H4c28fXnd8';
+CREATE USER 'zone-a-aaa'@'10.255.126.%' IDENTIFIED BY '69H4c28fXnd8';
+GRANT ALL PRIVILEGES ON acct_auth_authz.* TO 'zone-a-aaa'@'10.255.125.%';
+GRANT ALL PRIVILEGES ON acct_auth_authz.* TO 'zone-a-aaa'@'10.255.126.%';
+
+revoke ALL PRIVILEGES ON acct_auth_authz.* from 'zone-a-stage-aaa'@'10.255.125.%';
+
+# Data Center
+CREATE USER 'zone-a-uat-dc'@'10.255.125.%' IDENTIFIED BY 'yb9NSp6d9Dh2';
+CREATE USER 'zone-a-uat-dc'@'10.255.126.%' IDENTIFIED BY 'yb9NSp6d9Dh2';
+GRANT ALL PRIVILEGES ON tms_eyes_dc.* TO 'zone-a-uat-dc'@'10.255.125.%';
+GRANT ALL PRIVILEGES ON tms_eyes_dc.* TO 'zone-a-uat-dc'@'10.255.126.%';
+
+
+CREATE USER 'zone-a-dc'@'10.255.125.%' IDENTIFIED BY 'jEdRs7CLVGzv';
+CREATE USER 'zone-a-dc'@'10.255.126.%' IDENTIFIED BY 'jEdRs7CLVGzv';
+GRANT ALL PRIVILEGES ON eyes_dc.* TO 'zone-a-dc'@'10.255.125.%';
+GRANT ALL PRIVILEGES ON eyes_dc.* TO 'zone-a-dc'@'10.255.126.%';
+
+
+# mysql create user
+CREATE USER 'zone-a-tms'@'10.255.125.%' IDENTIFIED BY 'Cx68k37RD86n';
+CREATE USER 'zone-a-tms'@'10.255.126.%' IDENTIFIED BY 'Cx68k37RD86n';
+GRANT ALL PRIVILEGES ON tms_cusmgconsl.* TO 'zone-a-tms'@'10.255.125.%';
+GRANT ALL PRIVILEGES ON tms_cusmgconsl.* TO 'zone-a-tms'@'10.255.126.%';
+GRANT ALTER ROUTINE, CREATE ROUTINE, EXECUTE ON tms_cusmgconsl.* TO 'zone-a-tms'@'10.255.125.%';
+GRANT ALTER ROUTINE, CREATE ROUTINE, EXECUTE ON tms_cusmgconsl.* TO 'zone-a-tms'@'10.255.126.%';
+
+CREATE USER 'zone-a-biz'@'10.255.125.%' IDENTIFIED BY 'j748De6kza93';
+CREATE USER 'zone-a-biz'@'10.255.126.%' IDENTIFIED BY 'j748De6kza93';
+GRANT ALL PRIVILEGES ON biz_cusmgconsl.* TO 'zone-a-biz'@'10.255.125.%';
+GRANT ALL PRIVILEGES ON biz_cusmgconsl.* TO 'zone-a-biz'@'10.255.126.%';
+GRANT ALTER ROUTINE, CREATE ROUTINE, EXECUTE ON biz_cusmgconsl.* TO 'zone-a-biz'@'10.255.125.%';
+GRANT ALTER ROUTINE, CREATE ROUTINE, EXECUTE ON biz_cusmgconsl.* TO 'zone-a-biz'@'10.255.126.%';
+
+CREATE USER 'zone-a-demo'@'10.255.125.%' IDENTIFIED BY 'A749TUXQL774';
+CREATE USER 'zone-a-dmoe'@'10.255.126.%' IDENTIFIED BY 'A749TUXQL774';
+GRANT ALL PRIVILEGES ON demo_cusmgconsl.* TO 'zone-a-demo'@'10.255.125.%';
+GRANT ALL PRIVILEGES ON demo_cusmgconsl.* TO 'zone-a-demo'@'10.255.126.%';
+GRANT ALTER ROUTINE, CREATE ROUTINE, EXECUTE ON demo_cusmgconsl.* TO 'zone-a-demo'@'10.255.125.%';
+GRANT ALTER ROUTINE, CREATE ROUTINE, EXECUTE ON demo_cusmgconsl.* TO 'zone-a-demo'@'10.255.126.%';
+
+CREATE USER 'zone-a-mgrconsl'@'10.255.125.%' IDENTIFIED BY 'Qq7a6M2KR887';
+CREATE USER 'zone-a-mgrconsl'@'10.255.126.%' IDENTIFIED BY 'Qq7a6M2KR887';
+GRANT ALL PRIVILEGES ON mgrconsl.* TO 'zone-a-mgrconsl'@'10.255.125.%';
+GRANT ALL PRIVILEGES ON mgrconsl.* TO 'zone-a-mgrconsl'@'10.255.126.%';
+
+CREATE USER 'zone-a-bookstack'@'10.255.126.%' IDENTIFIED BY 'book28010606';
+GRANT ALL PRIVILEGES ON bookstackapp.* TO 'zone-a-bookstack'@'10.255.126.%';
+
+CREATE USER 'zone-a-bookstack'@'10.255.125.%' IDENTIFIED BY 'book28010606';
+GRANT ALL PRIVILEGES ON bookstackapp.* TO 'zone-a-bookstack'@'10.255.125.%';
+
+CREATE USER 'bookstack'@'10.255.125.%' IDENTIFIED BY 'book28010606';
+GRANT ALL PRIVILEGES ON bookstackapp.* TO 'bookstack'@'10.255.125.%';
+
+CREATE USER 'zone-a-jira'@'10.255.125.%' IDENTIFIED BY 'jira28010606';
+GRANT ALL PRIVILEGES ON jira.* TO 'zone-a-jira'@'10.255.125.%';
+ux4884m32Ygw
+
 
 # mysql database scripts
 # list collation of specific charset
 SHOW COLLATION WHERE Charset = 'utf8mb4';
 # list available character set.
 SHOW CHARACTER SET;
+#
+SELECT default_character_set_name, DEFAULT_COLLATION_NAME FROM information_schema.SCHEMATA 
+WHERE schema_name = "tms_cusmgconsl";
 # list user privileges
 SHOW GRANTS FOR '<USER>'@'IP or host'
 # mysqldump
@@ -187,6 +281,10 @@ mysqldump -udeveloper -p28010606 -h54.199.184.205 -P50000 sit_cusmgconsl PT_ADMI
 mysqldump -udeveloper -p28010606 -h54.199.184.205 -P50000 sit_cusmgconsl PT_ADMIN_ROLE > PT_ADMIN_ROLE.sql
 mysqldump -udeveloper -p28010606 -h54.199.184.205 -P50000 sit_cusmgconsl PT_ADMIN_RESOURCE > PT_ADMIN_RESOURCE.sql
 mysqldump -udeveloper -p28010606 -h54.199.184.205 -P50000 sit_cusmgconsl PT_ADMIN_USER_PT_ADMIN_ROLE > PT_ADMIN_USER_PT_ADMIN_ROLE.sql
+
+mysqldump --set-gtid-purged=OFF -u root -h eyesdb.c1u1qhoyb2gi.ap-northeast-1.rds.amazonaws.com -p jira > jira.sql
+
+mysqldump --set-gtid-purged=OFF -h zone-a-auraro-mysqls-instance-1.c1u1qhoyb2gi.ap-northeast-1.rds.amazonaws.com -u eyesmedia -p stage_acct_auth_authz > stage_acct_auth_authz.sql
 
 # mysql import data
 docker exec -i 7f7280a42441 mysql -udeveloper -p28010606 --database=sit_cusmgconsl < ./PT_ADMIN_USER.sql
@@ -243,8 +341,7 @@ docker run -u 1002 -d --restart always -p 8080:8080 \
 --env JENKINS_OPTS="--prefix=/jenkins" \
 -v /home/jenkins/jenkins-data:/var/jenkins_home \
 -v /usr/share/apache-maven:/usr/share/maven \
-cd14cecfdb3a
-jenkins:latest
+jenkins:lts
 
 
 docker commit -m "maven settings apply eyesmedia nexus3 repository profiles" 6748915b98d7 192.168.59.120:5000:jenkins-eyesmedia
@@ -275,11 +372,75 @@ docker cp DUMP-FILES INSTANCEID
 # restore to specify container
 docker exec -it INSTANCEID mongorestore --archive=DUMP-FILES --gzip --username USERNAME --password PASSWORD
 
+docker exec -it 32dba1402871 mongorestore --archive=/1592841602-20200623000002-nlubot_dictionary.gz --gzip --username bjlin --password Bj@28010606 --nsFrom "nlubot_dictionary.*" --nsTo "nlu_dict.*" --authenticationDatabase nlu_dict
+
+
+docker exec -it 32dba1402871 mongoimport -u bjlin -p Bj@28010606 --db nlu_dict 
+
 db.createUser({
     user: 'developer',
     pwd: '28010606',
     roles: [{ role: 'readWrite', db:'buddhism'}]
 })
+
+db.createUser({
+    user: 'zone-a-admin',
+    pwd: '7qVrB89W628K',
+    roles: [{ role: 'root', db:'admin'}]
+})
+
+db.createUser({
+    user: 'zone-a-nlp',
+    pwd: '64qnw9Bn973s',
+    roles: [{ role: 'dbOwner', db:'nlubot_dictionary'}]
+})
+
+db.createUser({
+    user: 'zone-a-tms',
+    pwd: 'yGRW929Y43b2',
+    roles: [{ role: 'dbOwner', db:'tms_cusmgconsl'}]
+})
+
+db.createUser({
+    user: 'zone-a-biz',
+    pwd: 'om429ws86wu9',
+    roles: [{ role: 'dbOwner', db:'biz_cusmgconsl'}]
+})
+
+db.createUser({
+    user: 'zone-a-demo',
+    pwd: 'r39m3miM74C2',
+    roles: [{ role: 'dbOwner', db:'demo_cusmgconsl'}]
+})
+
+db.createUser({
+    user: 'zone-a-sys',
+    pwd: '33vJ97k9K2JA',
+    roles: [{ role: 'dbOwner', db:'mgrconsl_sys'}]
+})
+
+db.createUser({
+    user: 'zone-a-funpass',
+    pwd: 'funpass28010606',
+    roles: [{ role: 'dbOwner', db:'asiafunpass'}]
+})
+
+db.createUser({
+    user: 'zone-a-logger',
+    pwd: 'Y2SRtVVXU2vb',
+    roles: [{ role: 'dbOwner', db:'system_logger'}]
+})
+
+db.createUser({
+    user: 'bjlin',
+    pwd: 'Bj@28010606',
+    roles: [{ role: 'dbOwner', db:'nlu_dict'}]
+})
+
+db.serverStatus().locks
+db.serverStatus().mem
+db.getProfilingStatus()
+db.setProfilingLevel(1)
 
 
 # connection to mongodb
@@ -325,9 +486,16 @@ db.createUser({
     roles: [{ role: 'readWrite', db:'funpass_cusmgconsl'}, { role: 'dbAdmin', db:'funpass_cusmgconsl'}]
 })
 
+db.createUser({
+    user: 'zone-a-rpt',
+    pwd: 'ypK26H4c8M72',
+    roles: [{ role: 'dbOwner', db:'rpt_mgconsl'}]
+})
+
+
 db.grantRolesToUser(
-   'funpass',
-   [ { role : 'dbOwner', db : 'funpass_cusmgconsl' } ]
+   'tms',
+   [ { role : 'readWrite', db : 'sit_tms' } ]
 )
 
 db.createUser({
@@ -336,5 +504,42 @@ db.createUser({
     roles: [{ role: 'readWrite', db:'test'}]
 })
 
+db.createUser({
+    user: 'uat-zone-a-nlp',
+    pwd: 'Hqt25FR8',
+    roles: [{ role: 'dbOwner', db:'uat_nlubot_dictionary'}]
+})
+
 
 mongo -u eyesmedia -p 9TExs47D33P2 --authenticationDatabase admin
+
+mongo -u zone-a-admin -p 7qVrB89W628K --authenticationDatabase admin
+
+# bookstack
+docker create \
+  --name=bookstack \
+  -e PUID=1007 \
+  -e PGID=1008 \
+  -e DB_HOST=zone-a-auraro-mysqls-instance-1.c1u1qhoyb2gi.ap-northeast-1.rds.amazonaws.com \
+  -e DB_USER=zone-a-bookstack \
+  -e DB_PASS=book28010606 \
+  -e DB_DATABASE=bookstackapp \
+  -e APP_URL=https://bookstack.eyesmedia.com.tw `#optional` \
+  -p 56875:80 \
+  -v /home/bookstack/data:/config \
+  --restart unless-stopped \
+  linuxserver/bookstack  
+
+docker create \
+  --name=bookstack \
+  -e PUID=1007 \
+  -e PGID=1008 \
+  -e DB_HOST=zone-a-auraro-mysqls-instance-1.c1u1qhoyb2gi.ap-northeast-1.rds.amazonaws.com \
+  -e DB_USER=zone-a-bookstack \
+  -e DB_PASS=book28010606 \
+  -e DB_DATABASE=bookstackapp \
+  -e APP_URL=https://bookstack.eyesmedia.com.tw `#optional` \
+  -p 56875:80 \
+  -v /home/bookstack/data:/config \
+  --restart unless-stopped \
+  linuxserver/bookstack    
