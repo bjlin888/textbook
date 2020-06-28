@@ -19,7 +19,9 @@ nlu_job_config
 # sit mongo 資料轉移，轉移來源 nlu_corpus_source, nlu_corpus_tag， ec-life 商品文本與貼標資料轉移
 STEP0 確認資料源資料列筆數，
 		1.1 nlu_corpus_source 資料列數統計條件：{"article_source" : "ec", "board":"eclife", "clean_status": {$in: [0, 1]}}
-    1.2 nlu_corpus_tag 資料列數統計條件：
+        共計有880列於 2020/6/28
+
+    1.2 nlu_corpus_tag 資料列數統計條件：共計有7909列於2020/6/28
 					db.getCollection('nlu_corpus_tag').aggregate([
 					    { $match: {"article_source" : "ec"}},
 					    {
@@ -38,6 +40,9 @@ STEP0 確認資料源資料列筆數，
 STEP1
 # 將 SIT ec-life 商品資訊從 nlu_corpus_source 導出
 mongoexport --db SOURCE_DB --collection nlu_corpus_source --query='{"article_source" : "ec", "board":"eclife", "clean_status": {$in: [0, 1]}}' --out=/nlubot_dictionary_eclife.json -u USER_NAME -p PASSWORD --authenticationDatabase SOURCE_DB
+
+# 指令匯出 nlu_corpus_source_eclife.json 位於 docker:/tmp
+docker exec -it 32dba1402871 mongoexport --db nlubot_dictionary --collection nlu_corpus_source --query='{"article_source" : "ec", "board":"eclife", "clean_status": {$in: [0, 1]}}' --out=/tmp/nlu_corpus_source_eclife.json -u nlubot -p 28010606 --authenticationDatabase nlubot_dictionary
 
 STEP2
 # 將 SIT ec-life 商品資訊匯入正式環境 nlu_corpus_source, 使用 mongoimport with insert 模式。
@@ -65,6 +70,11 @@ db.getCollection('nlu_corpus_tag').aggregate([
 STEP4 將 nlu_corpus_tag_ec 導出至檔案
 mongoexport --db SOURCE_DB --collection nlu_corpus_tag_ec --query="{}" --out=/nlu_corpus_tag_ec.json -u USER_NAME -p PASSWORD --authenticationDatabase SOURCE_DB
 
+# 指令導出 nlu_corpus_tag_ec.json 位於 docker:/tmp
+docker exec -it 32dba1402871  mongoexport --db nlubot_dictionary --collection nlu_corpus_tag_ec --query="{}" --out=/tmp/nlu_corpus_tag_ec.json -u nlubot -p 28010606 --authenticationDatabase nlubot_dictionary
+
+
+
 STEP5  將貼標資料導入正式區 nlu_corpus_tag
 mongoimport --db TARGET_DB --collection nlu_corpus_tag --file=/nlu_corpus_tag_ec.json --mode=insert --stopOnError -u USER_NAME -p PASSWORD --authenticationDatabase TARGET_DB
 
@@ -73,9 +83,19 @@ STEP6 驗證正式區資料列筆數是否與 STEP0 相同。
 STEP7 導出 SIT nlu_relation_tag, nlu_synonyms, dev_recom_item 的所有資料
 mongoexport --db SOURCE_DB --collection nlu_relation_tag --query="{}" --out=/nlu_relation_tag.json -u USER_NAME -p PASSWORD --authenticationDatabase SOURCE_DB
 
+# 指令導出 nlu_relation_tag.json 位於 docker:/tmp
+docker exec -it 32dba1402871  mongoexport --db nlubot_dictionary --collection nlu_relation_tag --query="{}" --out=/tmp/nlu_relation_tag.json -u nlubot -p 28010606 --authenticationDatabase nlubot_dictionary
+
 mongoexport --db SOURCE_DB --collection nlu_synonyms --query="{}" --out=/nlu_synonyms.json -u USER_NAME -p PASSWORD --authenticationDatabase SOURCE_DB
 
+# 指令導出 nlu_synonyms.json 位於 docker:/tmp
+docker exec -it 32dba1402871  mongoexport --db nlubot_dictionary --collection nlu_synonyms --query="{}" --out=/tmp/nlu_synonyms.json -u nlubot -p 28010606 --authenticationDatabase nlubot_dictionary
+
 mongoexport --db SOURCE_DB --collection dev_recom_item --query="{}" --out=/dev_recom_item.json -u USER_NAME -p PASSWORD --authenticationDatabase SOURCE_DB
+
+# 指令導出 dev_recom_item.json 位於 docker:/tmp
+docker exec -it 32dba1402871  mongoexport --db nlubot_dictionary --collection dev_recom_item --query="{}" --out=/tmp/dev_recom_item.json -u nlubot -p 28010606 --authenticationDatabase nlubot_dictionary
+
 
 STEP8 nlu_relation_tag.json, nlu_synonyms.json, dev_recom_item.json 分別導入正式環境
 mongoimport --db TARGET_DB --collection nlu_relation_tag --file=/nlu_relation_tag.json --mode=insert --stopOnError -u USER_NAME -p PASSWORD --authenticationDatabase TARGET_DB
